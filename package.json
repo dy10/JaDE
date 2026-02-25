@@ -1,0 +1,54 @@
+{
+  "name": "jade",
+  "productName": "JaDE",
+  "version": "0.1.0",
+  "description": "JaDE — Java Development Environment",
+  "main": "main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . -- --folder",
+    "dist": "electron-builder --mac"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "build": {
+    "appId": "com.jade.app",
+    "productName": "JaDE",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns",
+      "target": [
+        { "target": "dmg", "arch": ["arm64"] }
+      ]
+    },
+    "dmg": {
+      "title": "JaDE",
+      "background": null,
+      "window": { "width": 540, "height": 380 }
+    },
+    "directories": {
+      "output": "dist-build"
+    },
+    "files": [
+      "main/**",
+      "renderer/**",
+      "tools/**",
+      "node_modules/**",
+      "!node_modules/electron/**",
+      "!**/*.map",
+      "!**/test/**",
+      "!**/tests/**",
+      "!**/*.md"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^40.6.1",
+    "electron-builder": "^26.0.0"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "monaco-editor": "^0.55.1"
+  }
+}

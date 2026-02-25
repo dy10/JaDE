@@ -2,3 +2,4 @@ node_modules/
 jdtls/
 dist-build/
 build/icon.png
+tools/

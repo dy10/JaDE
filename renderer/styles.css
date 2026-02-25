@@ -1,0 +1,227 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #1e1e1e; color: #d4d4d4;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+/* ── Tab bar ─────────────────────────────────────────────────────────────── */
+#tabbar {
+  height: 35px;
+  background: #252526;
+  border-bottom: 1px solid #1e1e1e;
+  display: flex;
+  align-items: flex-end;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+}
+#tabbar::-webkit-scrollbar { height: 3px; }
+#tabbar::-webkit-scrollbar-thumb { background: #424242; }
+
+.tab {
+  height: 35px;
+  min-width: 100px; max-width: 200px;
+  padding: 0 10px 0 14px;
+  display: flex; align-items: center; gap: 6px;
+  background: #2d2d2d;
+  border-right: 1px solid #1e1e1e;
+  cursor: pointer;
+  font-size: 12px;
+  color: #9d9d9d;
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+.tab:hover { background: #323232; color: #d4d4d4; }
+.tab.active {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-top: 1px solid #007acc;
+}
+.tab-label {
+  overflow: hidden; text-overflow: ellipsis; flex: 1;
+}
+.tab-close {
+  width: 16px; height: 16px; line-height: 16px;
+  text-align: center; border-radius: 3px;
+  font-size: 14px; color: #9d9d9d;
+  flex-shrink: 0;
+  display: none;
+}
+.tab:hover .tab-close,
+.tab.active .tab-close { display: block; }
+.tab-close:hover { background: #4a4a4a; color: #d4d4d4; }
+.tab.dirty .tab-label::after { content: ' ●'; font-size: 10px; color: #e9ae5c; }
+
+/* ── Main area ───────────────────────────────────────────────────────────── */
+#main {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: row;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+#sidebar {
+  width: 220px; min-width: 120px; max-width: 500px;
+  background: #252526;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+#sidebar-header {
+  height: 22px; line-height: 22px;
+  padding: 0 12px;
+  font-size: 11px; font-weight: 700;
+  color: #bbb; letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+#file-tree {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  font-size: 13px;
+}
+#file-tree::-webkit-scrollbar { width: 6px; }
+#file-tree::-webkit-scrollbar-thumb { background: #424242; border-radius: 3px; }
+
+.tree-item {
+  display: flex; align-items: center;
+  height: 22px; cursor: pointer;
+  padding-right: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #ccc;
+}
+.tree-item:hover { background: #2a2d2e; }
+.tree-item.active { background: #094771; color: #fff; }
+.tree-root { color: #bbb; font-weight: 600; font-size: 12px; letter-spacing: 0.03em; margin-top: 4px; }
+.tree-icon { width: 16px; text-align: center; flex-shrink: 0; margin-right: 4px; }
+.tree-label { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Sidebar resize handle ───────────────────────────────────────────────── */
+#sidebar-resize {
+  width: 4px; cursor: col-resize;
+  background: transparent;
+  flex-shrink: 0;
+}
+#sidebar-resize:hover { background: #007acc; }
+
+/* ── Editor area ─────────────────────────────────────────────────────────── */
+#editor-area {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+}
+#editor-container { flex: 1; min-height: 0; }
+
+/* ── Status bar ──────────────────────────────────────────────────────────── */
+#statusbar {
+  height: 22px;
+  background: #007acc;
+  display: flex; align-items: center;
+  padding: 0 10px; gap: 6px;
+  flex-shrink: 0;
+}
+#status-text { font-size: 11px; color: #fff; }
+.spinner {
+  width: 10px; height: 10px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.hidden { display: none !important; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Nav highlight ───────────────────────────────────────────────────────── */
+.nav-target-line {
+  background: rgba(255, 200, 0, 0.15);
+  border-left: 3px solid #ffc800;
+}
+
+/* ── Results picker panel ────────────────────────────────────────────────── */
+#picker-panel {
+  position: absolute;
+  bottom: 22px; left: 0; right: 0;
+  max-height: 280px; overflow-y: auto;
+  background: #252526;
+  border-top: 1px solid #3c3c3c;
+  z-index: 100;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+}
+.picker-header {
+  padding: 6px 12px;
+  background: #37373d; color: #9d9d9d;
+  border-bottom: 1px solid #3c3c3c;
+  user-select: none;
+}
+.picker-row {
+  padding: 5px 16px; color: #d4d4d4;
+  cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.picker-row:hover { background: #094771; color: #fff; }
+
+/* ── Open Type dialog ────────────────────────────────────────────────────── */
+#open-type-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+  z-index: 200;
+}
+#open-type-dialog {
+  width: 600px;
+  background: #252526;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+#open-type-input {
+  width: 100%; padding: 10px 14px;
+  background: #3c3c3c; border: none; outline: none;
+  color: #d4d4d4; font-size: 14px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  border-bottom: 1px solid #555;
+}
+#open-type-results { max-height: 320px; overflow-y: auto; }
+#open-type-results::-webkit-scrollbar { width: 6px; }
+#open-type-results::-webkit-scrollbar-thumb { background: #424242; }
+.ot-row {
+  padding: 7px 14px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.ot-row:hover, .ot-row.selected { background: #094771; }
+.ot-name { font-size: 13px; color: #d4d4d4; }
+.ot-path { font-size: 11px; color: #9d9d9d; }
+
+/* ── Open Resource dialog (reuses Open Type styles) ─────────────────────── */
+#open-resource-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+  z-index: 200;
+}
+#open-resource-dialog {
+  width: 600px;
+  background: #252526;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+#open-resource-input {
+  width: 100%; padding: 10px 14px;
+  background: #3c3c3c; border: none; outline: none;
+  color: #d4d4d4; font-size: 14px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  border-bottom: 1px solid #555;
+}
+#open-resource-results { max-height: 320px; overflow-y: auto; }
+#open-resource-results::-webkit-scrollbar { width: 6px; }
+#open-resource-results::-webkit-scrollbar-thumb { background: #424242; }
+
+/* ── Dotfile dimming in file tree ────────────────────────────────────────── */
+.tree-dotfile { color: #666; }
