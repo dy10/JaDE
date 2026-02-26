@@ -81,3 +81,16 @@
 - [x] **M7-8** App name set to "JaDE" via `app.setName()` and `productName` in package.json
 - [x] **M7-9** Graceful shutdown — guard `mainWindow.isDestroyed()` before sending to renderer on LSP exit
 - [x] **M7-10** electron-builder packaging config; SVG icon → icns pipeline; system jdtls (brew) used instead of bundled copy
+
+---
+
+## Milestone 8 — Fixes & UX Improvements ✅
+
+- [x] **M8-1** Fix `npm start` on Node v25 — use `node node_modules/electron/cli.js .` instead of `electron .` (Node v25 broke symlink `require('./')` resolution)
+- [x] **M8-2** `--projects-file` CLI arg — load multiple Maven project folders from a text file (one path per line, `#` comments supported); added `dev:projects` npm script
+- [x] **M8-3** File tree: root folders start collapsed, expand lazily on first click
+- [x] **M8-4** Java import block: register custom `FoldingRangeProvider` so Monaco treats imports as a foldable region; auto-collapse on file open via `editor.foldAllImports`
+- [x] **M8-5** Fast app shutdown — fixed 30s exit delay caused by `watcher.close()` blocking and Electron intercepting `process.exit`; solution: destroy LSP stdio streams, skip `watcher.close()`, use `process.kill(process.pid, 'SIGKILL')` in `before-quit`
+- [x] **M8-6** Open Resource: wildcard matching with `*` (e.g. `asset*config` matches `AssetMatchingConfig.java`)
+- [x] **M8-7** Open Resource: camel-case initials matching (e.g. `AMC` matches `AssetMatchingConfig.java`)
+- [x] **M8-8** Open Resource: Cmd+A selects all text in search box (capture-phase listener bypasses Monaco's global handler)

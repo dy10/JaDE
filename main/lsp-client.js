@@ -207,6 +207,7 @@ class LspClient extends EventEmitter {
   }
 
   _onData(chunk) {
+    if (!this._proc) return; // already stopped
     this._buffer = Buffer.concat([this._buffer, chunk]);
     this._processBuffer();
   }
@@ -280,11 +281,25 @@ class LspClient extends EventEmitter {
   }
 
   stop() {
-    if (this._proc) {
-      this.notify('exit', {});
-      this._proc.kill();
-      this._proc = null;
+    if (!this._proc) return;
+    const proc = this._proc;
+    this._proc = null;
+
+    // Reject all pending requests immediately
+    for (const { reject } of this._pendingRequests.values()) {
+      reject(new Error('LSP client stopped'));
     }
+    this._pendingRequests.clear();
+
+    const pid = proc.pid;
+
+    // Stop all I/O immediately so no more data events fire
+    try { proc.stdout.destroy(); } catch {}
+    try { proc.stderr.destroy(); } catch {}
+    try { proc.stdin.destroy(); } catch {}
+
+    // SIGKILL the JVM — no graceful shutdown, it's too slow with many projects
+    try { process.kill(pid, 'SIGKILL'); } catch {}
   }
 
   _findJdtlsDir() {

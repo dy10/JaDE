@@ -16,18 +16,21 @@ async function addFolderToTree(folderPath) {
   rootRow.style.paddingLeft = '4px';
   rootRow.dataset.path = folderPath;
   rootRow.dataset.isDir = 'true';
-  rootRow.innerHTML = `<span class="tree-icon">▼</span><span class="tree-label" title="${folderPath}">${folderPath.split('/').pop()}</span>`;
+  rootRow.innerHTML = `<span class="tree-icon">▶</span><span class="tree-label" title="${folderPath}">${folderPath.split('/').pop()}</span>`;
   treeEl.appendChild(rootRow);
 
   const childContainer = document.createElement('div');
+  childContainer.style.display = 'none';
   treeEl.appendChild(childContainer);
-  expanded.set(folderPath, true);
-  await renderDir(folderPath, childContainer, 1, true);
+  expanded.set(folderPath, false);
 
-  rootRow.addEventListener('click', (e) => {
+  rootRow.addEventListener('click', async (e) => {
     e.stopPropagation();
     const open = expanded.get(folderPath);
     expanded.set(folderPath, !open);
+    if (!open && childContainer.childElementCount === 0) {
+      await renderDir(folderPath, childContainer, 1, true);
+    }
     childContainer.style.display = open ? 'none' : 'block';
     rootRow.querySelector('.tree-icon').textContent = open ? '▶' : '▼';
   });

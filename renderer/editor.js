@@ -15,6 +15,24 @@ require(['vs/editor/editor.main'], function () {
   let navIndex = -1;
   const MAX_HISTORY = 100;
 
+  // ── Java import fold range provider ───────────────────────────────────────
+  monaco.languages.registerFoldingRangeProvider('java', {
+    provideFoldingRanges(model) {
+      const lines = model.getLinesContent();
+      let first = -1, last = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trimStart().startsWith('import ')) {
+          if (first === -1) first = i; // 0-based
+          last = i;
+        } else if (first !== -1) {
+          break;
+        }
+      }
+      if (first === -1 || last <= first) return [];
+      return [{ start: first + 1, end: last + 1, kind: monaco.languages.FoldingRangeKind.Imports }];
+    },
+  });
+
   // ── Editor instance ────────────────────────────────────────────────────────
   const editor = monaco.editor.create(container, {
     value: '',
@@ -102,6 +120,7 @@ require(['vs/editor/editor.main'], function () {
     window.jadeTabs.openTab(filePath, label, false);
     document.dispatchEvent(new CustomEvent('file-activated', { detail: filePath }));
 
+    if (language === 'java') collapseImports();
     revealTarget(targetLine, targetColumn);
     editor.focus();
   }
@@ -124,6 +143,10 @@ require(['vs/editor/editor.main'], function () {
 
     revealTarget(targetLine, targetColumn);
     editor.focus();
+  }
+
+  function collapseImports() {
+    editor.trigger('keyboard', 'editor.foldAllImports', {});
   }
 
   function revealTarget(line, column) {
@@ -462,6 +485,14 @@ require(['vs/editor/editor.main'], function () {
   const orOverlay   = document.getElementById('open-resource-overlay');
   const orInput     = document.getElementById('open-resource-input');
   const orResults   = document.getElementById('open-resource-results');
+
+  // Intercept Cmd+A before Monaco's global handler swallows it
+  orInput.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+      e.stopPropagation();
+      orInput.select();
+    }
+  }, true);
   let orSelectedIndex = -1;
   let orItems = []; // { name, path }
   let orAllFiles = []; // full index, rebuilt on open
@@ -492,13 +523,31 @@ require(['vs/editor/editor.main'], function () {
     if (query.length === 0) {
       orItems = orAllFiles.slice(0, 50);
     } else {
-      const lower = query.toLowerCase();
-      orItems = orAllFiles
-        .filter(f => f.name.toLowerCase().includes(lower))
-        .slice(0, 50);
+      const matcher = query.includes('*')
+        ? wildcardMatcher(query)
+        : camelOrSubstringMatcher(query);
+      orItems = orAllFiles.filter(f => matcher(f.name)).slice(0, 50);
     }
     orSelectedIndex = orItems.length > 0 ? 0 : -1;
     renderOrResults();
+  }
+
+  function camelOrSubstringMatcher(query) {
+    // If query is all uppercase/digits treat as camel-case initials: AMC → A.*M.*C (word boundaries)
+    // Otherwise fall back to case-insensitive substring
+    const isInitials = /^[A-Z0-9]+$/.test(query);
+    if (isInitials) {
+      const re = new RegExp(query.split('').map(c => c.replace(/[.+^${}()|[\]\\]/g, '\\$&')).join('[a-z0-9]*'), '');
+      return (name) => re.test(name);
+    }
+    const lower = query.toLowerCase();
+    return (name) => name.toLowerCase().includes(lower);
+  }
+
+  function wildcardMatcher(pattern) {
+    // Each literal segment must appear in order, with anything in between
+    const re = new RegExp(pattern.split('*').map(s => s.replace(/[.+^${}()|[\]\\]/g, '\\$&')).join('.*'), 'i');
+    return (name) => re.test(name);
   }
 
   function renderOrResults() {

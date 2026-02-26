@@ -427,11 +427,42 @@ app.whenReady().then(async () => {
   // CLI: npm start -- --folder /path/to/project --files a.java b.java
   // Electron passes user args after the '--' separator; filter out Electron internals
   const args = process.argv.slice(process.argv.indexOf('--') + 1).filter(a => !a.startsWith('--inspect'));
-  const folderIdx = args.indexOf('--folder');
-  const filesIdx  = args.indexOf('--files');
+  const folderIdx       = args.indexOf('--folder');
+  const filesIdx        = args.indexOf('--files');
+  const projectsFileIdx = args.indexOf('--projects-file');
+
+  // Read folders from a projects file (one absolute or relative path per line)
+  function loadProjectsFile(filePath) {
+    try {
+      return fs.readFileSync(filePath, 'utf8')
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0 && !l.startsWith('#'))
+        .map(l => path.resolve(l))
+        .filter(l => fs.existsSync(l));
+    } catch (e) {
+      console.error('[main] Failed to read projects file:', e.message);
+      return [];
+    }
+  }
 
   mainWindow.webContents.once('did-finish-load', async () => {
-    if (folderIdx !== -1) {
+    if (projectsFileIdx !== -1) {
+      // --projects-file overrides saved state
+      const folders = loadProjectsFile(path.resolve(args[projectsFileIdx + 1]));
+      if (folders.length === 0) {
+        mainWindow.webContents.send('status', { text: 'Projects file empty or not found', busy: false });
+        return;
+      }
+      workspaceFolders.push(...folders);
+      saveWorkspaceState();
+      updateTitle();
+      mainWindow.webContents.send('status', { text: 'Starting language server…', busy: true });
+      for (const folder of folders) {
+        mainWindow.webContents.send('folder-added', folder);
+      }
+      await startLsp();
+    } else if (folderIdx !== -1) {
       // CLI --folder overrides saved state
       const folder = path.resolve(args[folderIdx + 1]);
       workspaceFolders.push(folder);
@@ -466,8 +497,14 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on('window-all-closed', () => {
-  if (fileWatcher) fileWatcher.stop();
-  if (lspClient)   lspClient.stop();
-  if (process.platform !== 'darwin') app.quit();
+app.on('before-quit', () => {
+  const t = () => new Date().toISOString();
+  console.log(`[quit] ${t()} before-quit fired`);
+  if (fileWatcher) { fileWatcher.stop(); fileWatcher = null; console.log(`[quit] ${t()} fileWatcher stopped`); }
+  if (lspClient)   { lspClient.stop();   lspClient   = null; console.log(`[quit] ${t()} lspClient stopped`); }
+  console.log(`[quit] ${t()} killing self`);
+  // SIGKILL ourselves — the only reliable way to exit when Electron blocks process.exit
+  process.kill(process.pid, 'SIGKILL');
 });
+
+app.on('window-all-closed', () => app.quit());

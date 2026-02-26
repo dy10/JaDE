@@ -28,7 +28,7 @@ class FileWatcher {
           /\.jade/,
           /target[/\\]/,
         ],
-        persistent: true,
+        persistent: false,
         ignoreInitial: true,
         awaitWriteFinish: { stabilityThreshold: 200 },
       });
@@ -77,10 +77,8 @@ class FileWatcher {
   }
 
   stop() {
-    if (this._watcher) {
-      this._watcher.close();
-      this._watcher = null;
-    }
+    // Skip close() — it blocks for 30s with many watched dirs. OS cleans up on process exit.
+    this._watcher = null;
   }
 }
 
